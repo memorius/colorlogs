@@ -81,44 +81,54 @@ my %config;
 open(CFG, $configfile);
     while (<CFG>) {
         chomp;
-	# Chomp out the whitespace
+        # Chomp out the leading whitespace
         s/^\s*//;
-        s/\s*$//;
-	
-	# Search for special characters
-	s/\~/\\\~/g;
-        s/\!/\\\!/g;
-        s/\@/\\\@/g;
-        s/\#/\\\#/g;
-        s/\$/\\\$/g;
-        s/\%/\\\%/g;
-        s/\^/\\\^/g;
-        s/\&/\\\&/g;
-        s/\*/\\\*/g;
-        s/\-/\\\-/g;
-        s/\_/\\\_/g;
-        s/\=/\\\=/g;
-        s/\+/\\\+/g;
-        s/\[/\\\[/g;
-        s/\]/\\\]/g;
-        s/\{/\\\{/g;
-        s/\}/\\\}/g;
-        s/\|/\\\|/g;
-        s/\"/\\\"/g;
-        s/\;/\\\;/g;
-        s/\</\\\</g;
-        s/\>/\\\>/g;
-        s/\?/\\\?/g;
-        s/\(/\\\(/g;
-        s/\)/\\\)/g;
-        s/\`/\\\`/g;
-        s/\'/\\\'/g;
+        # Chomp out the trailing whitespace
+        # s/\s*$//;
 
+        # Skip comment lines
         next if (/^:/);
+
         my ($color, $string);
-        ($color, $string) = split(/\s*,\s*/);
+
+        if (/^\w+\s*regex:/) {
+            ($color, $string) = split(/\s*regex:/);
+        } elsif (/^\w+\s*literal:/) {
+            # Convert to a regex by replacing regex-meaningful chars
+            s/\~/\\\~/g;
+            s/\!/\\\!/g;
+            s/\@/\\\@/g;
+            s/\#/\\\#/g;
+            s/\$/\\\$/g;
+            s/\%/\\\%/g;
+            s/\^/\\\^/g;
+            s/\&/\\\&/g;
+            s/\*/\\\*/g;
+            s/\-/\\\-/g;
+            s/\_/\\\_/g;
+            s/\=/\\\=/g;
+            s/\+/\\\+/g;
+            s/\[/\\\[/g;
+            s/\]/\\\]/g;
+            s/\{/\\\{/g;
+            s/\}/\\\}/g;
+            s/\|/\\\|/g;
+            s/\"/\\\"/g;
+            s/\;/\\\;/g;
+            s/\</\\\</g;
+            s/\>/\\\>/g;
+            s/\?/\\\?/g;
+            s/\(/\\\(/g;
+            s/\)/\\\)/g;
+            s/\`/\\\`/g;
+            s/\'/\\\'/g;
+            ($color, $string) = split(/\s*literal:/);
+        }
+
         $color = lc($color);
-        $config{$string} = $color;
+        if ($string) {
+            $config{$string} = $color;
+        }
     } # while
 close(CFG);
 
@@ -127,6 +137,7 @@ my $line;
 while ($line=<STDIN>) {
     my ($string, $textcolor, $matched);
     $matched = 0;
+    # TODO: apply the tests in the same order as the config file, and stop at first match
     foreach $string (keys %config) {
         if ($line =~ /$string/) {
             $matched = 1;
