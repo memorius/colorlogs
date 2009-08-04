@@ -1,4 +1,10 @@
 #!/usr/bin/perl
+use strict;
+use warnings;
+
+# Requires module 'scriptname'. To install: 'sudo cpan' then run 'install scriptname' within cpan shell.
+use scriptname;
+
 # Colorlogs.pl - A PERL script to colorize log viewing
 #
 # Changes:
@@ -18,7 +24,7 @@
 ##########################################################
 
 # Create the colors Assoc. Array
-%colors = (
+my %colors = (
     'black'              => "\033[30m",
     'red'                => "\033[31m",
     'green'              => "\033[32m",
@@ -62,10 +68,14 @@
     'default'            => "\033[0m"
 );
 
-$configfile = "/etc/colorlogs.conf";
+# First commandline argument is the name of a config file from the same directory as this script,
+# without the 'conf' extension
+my $configfile = scriptname::mydir . "/$ARGV[0].conf";
 
-print STDERR "ERROR: Could not open config file: $!" and exit(1)
+print STDERR "ERROR: Could not open config file '$configfile': $!" and exit(1)
     if (! -f $configfile);
+
+my %config;
 
 # Read config
 open(CFG, $configfile);
@@ -105,6 +115,7 @@ open(CFG, $configfile);
         s/\'/\\\'/g;
 
         next if (/^:/);
+        my ($color, $string);
         ($color, $string) = split(/\s*,\s*/);
         $color = lc($color);
         $config{$string} = $color;
@@ -112,11 +123,15 @@ open(CFG, $configfile);
 close(CFG);
 
 # Parse STDIN
-while ($line=<>) {
+my $line;
+while ($line=<STDIN>) {
+    my ($string, $textcolor, $matched);
     $matched = 0;
     foreach $string (keys %config) {
-        ($matched = 1) and ($textcolor=$config{$string})
-            if ($line =~ /$string/);
+        if ($line =~ /$string/) {
+            $matched = 1;
+            $textcolor = $config{$string};
+        }
     }
 
     if (!$matched) {
