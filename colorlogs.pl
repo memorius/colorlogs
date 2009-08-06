@@ -81,6 +81,8 @@ open(CFG, $configfile);
 
         # Skip comment lines
         next if (/^:/);
+        # Skip empty lines
+        next if (/^\s*$/);
 
         my ($color_name, $pattern);
 
@@ -116,12 +118,19 @@ open(CFG, $configfile);
             s/\`/\\\`/g;
             s/\'/\\\'/g;
             ($color_name, $pattern) = split(/\s*literal:/);
+        } else {
+            print STDERR "ERROR: Unknown pattern type for config file entry '$_'" and exit(1);
         }
 
         $color_name = lc($color_name);
         if ($pattern) {
-            push(@patterns, $pattern);
-            $pattern_colorcodes{$pattern} = $colorcodes{$color_name};
+            my $colorcode = $colorcodes{$color_name};
+            if ($colorcode) {
+                push(@patterns, $pattern);
+                $pattern_colorcodes{$pattern} = $colorcode;
+            } else {
+                print STDERR "ERROR: Unknown color name '$color_name' for config file entry '$_'" and exit(1);
+            }
         }
     } # while
 close(CFG);
