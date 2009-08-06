@@ -122,6 +122,14 @@ open(CFG, $configfile);
         } elsif (/^\w+\s*text:/) {
             escape_regex_special_chars;
             ($color_name, $pattern) = split(/\s*text:/);
+        } elsif (/^\w+\s*prefix:/) {
+            escape_regex_special_chars;
+            ($color_name, $pattern) = split(/\s*prefix:/);
+            $pattern = "^" . $pattern;
+        } elsif (/^\w+\s*suffix:/) {
+            escape_regex_special_chars;
+            ($color_name, $pattern) = split(/\s*suffix:/);
+            $pattern = $pattern . "\$";
         } else {
             print STDERR "ERROR: Unknown pattern type for config file entry '$_'" and exit(1);
         }
