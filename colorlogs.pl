@@ -7,24 +7,13 @@ use scriptname;
 
 # Colorlogs.pl - A PERL script to colorize log viewing
 #
-# Changes:
-#   - code rewrite 
-#   - added color Modifiers 
-#     (bright, underline, blinking, background)
-#   - changed default config file location to /etc/
-#   - made config file more whitespace tolerant
-#   - added special character checking for config
-#     file so now users can type exactally what they
-#     want to look for instead of having to denote 
-#     special characters with a \
-#
-# Special Thanks 
-# Leon Breedt - for help optimizing the code.
+# Adapted by Nick Clarke from the version here:
+#   http://www.resentment.org/projects/colorlogs/
 #
 ##########################################################
 
-# Create the colors Assoc. Array
-my %colors = (
+# Create the colorcodes Assoc. Array
+my %colorcodes = (
     'black'              => "\033[30m",
     'red'                => "\033[31m",
     'green'              => "\033[32m",
@@ -75,7 +64,11 @@ my $configfile = scriptname::mydir . "/$ARGV[0].conf";
 print STDERR "ERROR: Could not open config file '$configfile': $!" and exit(1)
     if (! -f $configfile);
 
-my %config;
+# Regexes to match against the log text, in the order they are defined in the config file
+my @patterns;
+
+# Mapping from pattern to color codes
+my %pattern_colorcodes;
 
 # Read config
 open(CFG, $configfile);
@@ -83,16 +76,16 @@ open(CFG, $configfile);
         chomp;
         # Chomp out the leading whitespace
         s/^\s*//;
-        # Chomp out the trailing whitespace
+        # Leave trailing whitespace alone because we might want to match it in patterns
         # s/\s*$//;
 
         # Skip comment lines
         next if (/^:/);
 
-        my ($color, $string);
+        my ($color_name, $pattern);
 
         if (/^\w+\s*regex:/) {
-            ($color, $string) = split(/\s*regex:/);
+            ($color_name, $pattern) = split(/\s*regex:/);
         } elsif (/^\w+\s*literal:/) {
             # Convert to a regex by replacing regex-meaningful chars
             s/\~/\\\~/g;
@@ -122,32 +115,30 @@ open(CFG, $configfile);
             s/\)/\\\)/g;
             s/\`/\\\`/g;
             s/\'/\\\'/g;
-            ($color, $string) = split(/\s*literal:/);
+            ($color_name, $pattern) = split(/\s*literal:/);
         }
 
-        $color = lc($color);
-        if ($string) {
-            $config{$string} = $color;
+        $color_name = lc($color_name);
+        if ($pattern) {
+            push(@patterns, $pattern);
+            $pattern_colorcodes{$pattern} = $colorcodes{$color_name};
         }
     } # while
 close(CFG);
 
 # Parse STDIN
 my $line;
-while ($line=<STDIN>) {
-    my ($string, $textcolor, $matched);
-    $matched = 0;
-    # TODO: apply the tests in the same order as the config file, and stop at first match
-    foreach $string (keys %config) {
-        if ($line =~ /$string/) {
-            $matched = 1;
-            $textcolor = $config{$string};
+my $default_color = $colorcodes{default};
+LINE: while ($line=<STDIN>) {
+    # Check against each pattern in the same order they appear in the config file.
+    # Output line with color for first matching pattern found.
+    foreach my $pattern (@patterns) {
+        if ($line =~ /$pattern/) {
+            print "$pattern_colorcodes{$pattern}$line$default_color";
+            next LINE;
         }
     }
 
-    if (!$matched) {
-        print "$colors{default}$line";
-    } else {
-        print "$colors{$textcolor}$line$colors{default}";
-    }
+    # No matching pattern, use default
+    print "$default_color$line";
 }
