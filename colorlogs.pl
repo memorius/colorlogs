@@ -57,6 +57,37 @@ my %colorcodes = (
     'default'            => "\033[0m"
 );
 
+# Convert to a regex by replacing regex-meaningful chars
+sub escape_regex_special_chars {
+    s/\~/\\\~/g;
+    s/\!/\\\!/g;
+    s/\@/\\\@/g;
+    s/\#/\\\#/g;
+    s/\$/\\\$/g;
+    s/\%/\\\%/g;
+    s/\^/\\\^/g;
+    s/\&/\\\&/g;
+    s/\*/\\\*/g;
+    s/\-/\\\-/g;
+    s/\_/\\\_/g;
+    s/\=/\\\=/g;
+    s/\+/\\\+/g;
+    s/\[/\\\[/g;
+    s/\]/\\\]/g;
+    s/\{/\\\{/g;
+    s/\}/\\\}/g;
+    s/\|/\\\|/g;
+    s/\"/\\\"/g;
+    s/\;/\\\;/g;
+    s/\</\\\</g;
+    s/\>/\\\>/g;
+    s/\?/\\\?/g;
+    s/\(/\\\(/g;
+    s/\)/\\\)/g;
+    s/\`/\\\`/g;
+    s/\'/\\\'/g;
+}
+
 # First commandline argument is the name of a config file from the same directory as this script,
 # without the 'conf' extension
 my $configfile = scriptname::mydir . "/$ARGV[0].conf";
@@ -88,36 +119,9 @@ open(CFG, $configfile);
 
         if (/^\w+\s*regex:/) {
             ($color_name, $pattern) = split(/\s*regex:/);
-        } elsif (/^\w+\s*literal:/) {
-            # Convert to a regex by replacing regex-meaningful chars
-            s/\~/\\\~/g;
-            s/\!/\\\!/g;
-            s/\@/\\\@/g;
-            s/\#/\\\#/g;
-            s/\$/\\\$/g;
-            s/\%/\\\%/g;
-            s/\^/\\\^/g;
-            s/\&/\\\&/g;
-            s/\*/\\\*/g;
-            s/\-/\\\-/g;
-            s/\_/\\\_/g;
-            s/\=/\\\=/g;
-            s/\+/\\\+/g;
-            s/\[/\\\[/g;
-            s/\]/\\\]/g;
-            s/\{/\\\{/g;
-            s/\}/\\\}/g;
-            s/\|/\\\|/g;
-            s/\"/\\\"/g;
-            s/\;/\\\;/g;
-            s/\</\\\</g;
-            s/\>/\\\>/g;
-            s/\?/\\\?/g;
-            s/\(/\\\(/g;
-            s/\)/\\\)/g;
-            s/\`/\\\`/g;
-            s/\'/\\\'/g;
-            ($color_name, $pattern) = split(/\s*literal:/);
+        } elsif (/^\w+\s*text:/) {
+            escape_regex_special_chars;
+            ($color_name, $pattern) = split(/\s*text:/);
         } else {
             print STDERR "ERROR: Unknown pattern type for config file entry '$_'" and exit(1);
         }
