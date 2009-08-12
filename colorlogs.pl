@@ -86,6 +86,36 @@ sub escape_regex_special_chars {
     s/\)/\\\)/g;
     s/\`/\\\`/g;
     s/\'/\\\'/g;
+    s/\./\\\./g;
+}
+
+sub escape_non_glob_regex_special_chars {
+    s/\~/\\\~/g;
+    s/\!/\\\!/g;
+    s/\@/\\\@/g;
+    s/\#/\\\#/g;
+    s/\$/\\\$/g;
+    s/\%/\\\%/g;
+    s/\^/\\\^/g;
+    s/\&/\\\&/g;
+    s/\-/\\\-/g;
+    s/\_/\\\_/g;
+    s/\=/\\\=/g;
+    s/\+/\\\+/g;
+    s/\[/\\\[/g;
+    s/\]/\\\]/g;
+    s/\{/\\\{/g;
+    s/\}/\\\}/g;
+    s/\|/\\\|/g;
+    s/\"/\\\"/g;
+    s/\;/\\\;/g;
+    s/\</\\\</g;
+    s/\>/\\\>/g;
+    s/\(/\\\(/g;
+    s/\)/\\\)/g;
+    s/\`/\\\`/g;
+    s/\'/\\\'/g;
+    s/\./\\\./g;
 }
 
 # First commandline argument is the name of a config file from the same directory as this script,
@@ -130,6 +160,11 @@ open(CFG, $configfile);
             escape_regex_special_chars;
             ($color_name, $pattern) = split(/\s*suffix:/);
             $pattern = $pattern . "\$";
+        } elsif (/^\w+\s*glob:/) {
+            escape_non_glob_regex_special_chars;
+            ($color_name, $pattern) = split(/\s*glob:/);
+            $pattern =~ s/\*/\.\*/g;
+            $pattern =~ s/\?/\./g;
         } else {
             print STDERR "ERROR: Unknown pattern type for config file entry '$_'" and exit(1);
         }
