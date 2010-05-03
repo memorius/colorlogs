@@ -1,6 +1,7 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -T
 use strict;
 use warnings;
+use re 'taint';
 
 # Requires module 'scriptname'. To install: 'sudo cpan' then run 'install scriptname' within cpan shell.
 use scriptname;
