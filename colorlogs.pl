@@ -186,16 +186,23 @@ close(CFG);
 # Parse STDIN
 my $line;
 my $default_color = $colorcodes{default};
-LINE: while ($line=<STDIN>) {
-    # Check against each pattern in the same order they appear in the config file.
-    # Output line with color for first matching pattern found.
-    foreach my $pattern (@patterns) {
-        if ($line =~ /$pattern/) {
-            print "$pattern_colorcodes{$pattern}$line$default_color";
-            next LINE;
+if ( -t STDOUT ) {
+    LINE: while ($line=<STDIN>) {
+        # Check against each pattern in the same order they appear in the config file.
+        # Output line with color for first matching pattern found.
+        foreach my $pattern (@patterns) {
+            if ($line =~ /$pattern/) {
+                print "$pattern_colorcodes{$pattern}$line$default_color";
+                next LINE;
+            }
         }
-    }
 
-    # No matching pattern, use default
-    print "$default_color$line";
+        # No matching pattern, use default
+        print "$default_color$line";
+    }
+} else {
+    # Output is piped or redirected - disable colors
+    while ($line=<STDIN>) {
+        print "$line";
+    }
 }
