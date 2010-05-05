@@ -42,5 +42,5 @@ function mvn() {
 Using these aliases in other scripts may not work properly
 - I haven't figured out how to make these 'ant' and 'mvn' functions
 be inherited when running other scripts. So if you want color output when
-calling things indirectly, you can use the the 'color-ant' and 'color-mvn'
-scripts in this directory, which do the same thing.
+calling things indirectly, you can use the 'script-utils/color-ant'
+and 'script-utils/color-mvn' scripts, which do the same thing.
