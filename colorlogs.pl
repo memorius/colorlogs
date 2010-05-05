@@ -6,10 +6,22 @@ use re 'taint';
 # Requires module 'scriptname'. To install: 'sudo cpan' then run 'install scriptname' within cpan shell.
 use scriptname;
 
-# Colorlogs.pl - A PERL script to colorize log viewing
+# colorlogs.pl - A PERL script to colorize log viewing, command output etc
 #
-# Adapted by Nick Clarke from the version here:
-#   http://www.resentment.org/projects/colorlogs/
+# Author:
+#   This version:
+#     adapted by Nick Clarke - memorius@gmail.com - http://planproof-fool.blogspot.com/
+#     http://github.com/memorius/colorlogs/
+#
+#   Original version:
+#     forked from v1.1 obtained from here, unknown license:
+#     http://www.resentment.org/projects/colorlogs/
+#
+# This program is free software. It comes without any warranty, to
+# the extent permitted by applicable law. You can redistribute it
+# and/or modify it under the terms of the Do What The Fuck You Want
+# To Public License, Version 2, as published by Sam Hocevar. See
+# WTFPL.txt for more details.
 #
 ##########################################################
 

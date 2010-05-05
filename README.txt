@@ -1,13 +1,34 @@
+ColorLogs - A PERL script to colorize log viewing, command output etc
+---------------------------------------------------------------------
+
+Author:
+-------
+This version:
+  adapted by Nick Clarke - memorius@gmail.com - http://planproof-fool.blogspot.com/
+  http://github.com/memorius/colorlogs/
+
+Original version:
+  forked from v1.1 obtained from here, unknown license:
+  http://www.resentment.org/projects/colorlogs/
+
+
+Requirements
+-------------
+Requires (obviously) a terminal that understands color escape codes.
+
+Requires perl 5.
+
+Requires perl module 'scriptname'.
+To install: 'sudo cpan' then run 'install scriptname' within cpan shell.
+
+
+Usage:
+------
 To use: link colorlogs into your path, e.g.
 
 ln -s ~/src/Colorlogs/colorlogs.pl ~/bin/colorlogs
 
 You may also want to do the same with the 'color-ant' script (see below)
-
-
-Requires perl module 'scriptname'.
-To install: 'sudo cpan' then run 'install scriptname' within cpan shell.
-
 
 Now to run:
 
@@ -17,13 +38,6 @@ e.g. this will run ant, sending all console output (including stderr)
 to colorlogs, and highlight with the rules in 'config/ant.conf'.
 
   ant dist 2>&1 | colorlogs ant
-
-
-The rules are line-based and fairly self-explanatory,
-see example files in 'config/' directory.
-
-For available colors, see head of colorlogs.pl.
-
 
 To make ant and maven provide colorlogs-processed output by default,
 using the colour patterns in ant.conf and maven.conf, I have this in my .bashrc:
@@ -39,8 +53,26 @@ function mvn() {
 }
 
 
-Using these aliases in other scripts may not work properly
-- I haven't figured out how to make these 'ant' and 'mvn' functions
-be inherited when running other scripts. So if you want color output when
-calling things indirectly, you can use the 'script-utils/color-ant'
-and 'script-utils/color-mvn' scripts, which do the same thing.
+Customizing the highlighting
+----------------------------
+Create a file called <somename>.conf, in the 'config/' directory.
+
+The rules are line-based and fairly self-explanatory,
+see example files in 'config/' directory.
+
+They are applied in order - the first rule to match a given line is used.
+
+For available colors, see head of colorlogs.pl.
+
+
+Using in scripts
+----------------
+The script will try to detect when it is not running in a terminal and will
+just pipe its output verbatim if not - so it can still be used in pipelines,
+when redirecting output to a file, etc.
+
+Using the 'ant' and 'mvn' functions described above may not work in other scripts
+- I haven't figured out how to make them be inherited.
+So if you want color output when calling things indirectly,
+you can use the 'script-utils/color-ant' and 'script-utils/color-mvn' scripts,
+which do the same thing.
