@@ -14,12 +14,13 @@ Now to run:
   <some-command-that-writes-stdout> | colorlogs <highlighting-config-file-name>
 
 e.g. this will run ant, sending all console output (including stderr)
-to colorlogs, and highlight with the rules in 'ant.conf'.
+to colorlogs, and highlight with the rules in 'config/ant.conf'.
 
   ant dist 2>&1 | colorlogs ant
 
 
-The rules are line-based and fairly self-explanatory, see example files.
+The rules are line-based and fairly self-explanatory,
+see example files in 'config/' directory.
 
 For available colors, see head of colorlogs.pl.
 

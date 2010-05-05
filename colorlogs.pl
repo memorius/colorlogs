@@ -121,7 +121,7 @@ sub escape_non_glob_regex_special_chars {
 
 # First commandline argument is the name of a config file from the same directory as this script,
 # without the 'conf' extension
-my $configfile = scriptname::mydir . "/$ARGV[0].conf";
+my $configfile = scriptname::mydir . "/config/$ARGV[0].conf";
 
 print STDERR "ERROR: Could not open config file '$configfile': $!" and exit(1)
     if (! -f $configfile);
