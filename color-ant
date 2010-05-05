@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# Return the exit status of the first command that fails ('ant'),
+# instead of the last command in the pipe ('colorlogs')
+set -o pipefail
+
+command ant "$@" 2>&1 | colorlogs ant
