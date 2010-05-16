@@ -164,21 +164,21 @@ open(CFG, $configfile);
         my ($color_name, $pattern);
 
         if (/^\w+\s*regex:/) {
-            ($color_name, $pattern) = split(/\s*regex:/);
+            ($color_name, $pattern) = split(/\s*regex:/, $_, 2);
         } elsif (/^\w+\s*text:/) {
             escape_regex_special_chars;
-            ($color_name, $pattern) = split(/\s*text:/);
+            ($color_name, $pattern) = split(/\s*text:/, $_, 2);
         } elsif (/^\w+\s*prefix:/) {
             escape_regex_special_chars;
-            ($color_name, $pattern) = split(/\s*prefix:/);
+            ($color_name, $pattern) = split(/\s*prefix:/, $_, 2);
             $pattern = "^" . $pattern;
         } elsif (/^\w+\s*suffix:/) {
             escape_regex_special_chars;
-            ($color_name, $pattern) = split(/\s*suffix:/);
+            ($color_name, $pattern) = split(/\s*suffix:/, $_, 2);
             $pattern = $pattern . "\$";
         } elsif (/^\w+\s*glob:/) {
             escape_non_glob_regex_special_chars;
-            ($color_name, $pattern) = split(/\s*glob:/);
+            ($color_name, $pattern) = split(/\s*glob:/, $_, 2);
             $pattern =~ s/\*/\.\*/g;
             $pattern =~ s/\?/\./g;
         } else {
