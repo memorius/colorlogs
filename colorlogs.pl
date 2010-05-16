@@ -1,4 +1,4 @@
-#!/usr/bin/perl -T
+#!/usr/bin/perl
 use strict;
 use warnings;
 use re 'taint';
@@ -24,6 +24,9 @@ use scriptname;
 # WTFPL.txt for more details.
 #
 ##########################################################
+
+# How long to wait for a newline before outputting buffered partial lines unformatted
+my $unterminated_line_timeout_seconds = 1;
 
 # Create the colorcodes Assoc. Array
 my %colorcodes = (
@@ -195,26 +198,63 @@ open(CFG, $configfile);
     } # while
 close(CFG);
 
-# Parse STDIN
-my $line;
+my $line = '';
 my $default_color = $colorcodes{default};
-if ( -t STDOUT ) {
-    LINE: while ($line=<STDIN>) {
-        # Check against each pattern in the same order they appear in the config file.
-        # Output line with color for first matching pattern found.
-        foreach my $pattern (@patterns) {
-            if ($line =~ /$pattern/) {
-                print "$pattern_colorcodes{$pattern}$line$default_color";
-                next LINE;
-            }
-        }
 
-        # No matching pattern, use default
-        print "$default_color$line";
+sub colorize_and_output_line {
+    # Check against each pattern in the same order they appear in the config file.
+    # Output line with color for first matching pattern found.
+    foreach my $pattern (@patterns) {
+        if ($line =~ /$pattern/) {
+            syswrite(STDOUT, "$pattern_colorcodes{$pattern}$line$default_color");
+            $line = '';
+            return;
+        }
+    }
+
+    # No matching pattern, use default
+    syswrite(STDOUT, "$default_color$line");
+    $line = '';
+}
+
+if ( -t STDOUT ) {
+    # Output is to a terminal.
+    # Read STDIN and output lines with appropriate formatting
+    my $char;
+    my $rin = "";
+    my $rout;
+    vec ($rin, fileno(STDIN), 1) = 1;
+
+    # We read one character at a time - inefficient, but allows us to sensibly handle 'prompt' lines
+    # rather than waiting indefinitely for their newline - see below.
+    CHAR: while (1) {
+        # Check whether any input is available to read, waiting for timeout otherwise
+        if (select(($rout = $rin), undef, undef, $unterminated_line_timeout_seconds)) {
+            # Read one char
+            unless (sysread(STDIN, $char, 1)) {
+                # End of file - finished
+                colorize_and_output_line;
+                last;
+            }
+            # Got a character
+            $line = $line . $char;
+            if ($char eq "\n") {
+                # Got a whole line.
+                colorize_and_output_line;
+            }
+        } elsif ($line ne '') {
+            # Select timed out with no input, but we have some accumulated chars hidden in our buffer:
+            # i.e. no newline has appeared after waiting a while.
+            # Happens when output contains prompts for the user, with the cursor waiting at the end of the line for user input.
+            # Output the accumulated chars, running formatting on what we actually have,
+            # rather than waiting indefinitely for the newline while the prompt text is hidden in our buffer.
+            # XXX: if this happens in the middle of a line due to slow input, it may misapply colors - too bad.
+            colorize_and_output_line;
+        }
     }
 } else {
-    # Output is piped or redirected - disable colors
-    while ($line=<STDIN>) {
+    # Output is piped or redirected - disable colors, use line-based buffered IO
+    while ($line = <STDIN>) {
         print "$line";
     }
 }
