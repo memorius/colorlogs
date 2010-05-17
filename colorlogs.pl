@@ -138,8 +138,7 @@ sub escape_non_glob_regex_special_chars {
 # without the 'conf' extension
 my $configfile = scriptname::mydir . "/config/$ARGV[0].conf";
 
-print STDERR "ERROR: Could not open config file '$configfile': $!" and exit(1)
-    if (! -f $configfile);
+die "ERROR: Could not open config file '$configfile': $!, aborting" unless (-f $configfile);
 
 # Regexes to match against the log text, in the order they are defined in the config file
 my @patterns;
@@ -188,7 +187,7 @@ open(CFG, $configfile);
             $pattern =~ s/\*/\.\*/g;
             $pattern =~ s/\?/\./g;
         } else {
-            print STDERR "ERROR: Unknown pattern type for config file entry '$_'" and exit(1);
+            die "ERROR: Unknown pattern type for config file entry '$_', aborting";
         }
 
         # Add case-insensitive regex modifier if required
@@ -203,7 +202,7 @@ open(CFG, $configfile);
                 push(@patterns, $pattern);
                 $pattern_colorcodes{$pattern} = $colorcode;
             } else {
-                print STDERR "ERROR: Unknown color name '$color_name' for config file entry '$_'" and exit(1);
+                die "ERROR: Unknown color name '$color_name' for config file entry '$_', aborting";
             }
         }
     } # while
@@ -215,6 +214,9 @@ my $default_color = $colorcodes{default};
 sub colorize_and_output_line {
     # Check against each pattern in the same order they appear in the config file.
     # Output line with color for first matching pattern found.
+    # We avoid line-buffered output by using syswrite rather than print,
+    # because we may output unterminated prompt lines which need to be flushed immediately.
+    # This shouldn't cost too much because we are still writing whole lines, not individual chars.
     foreach my $pattern (@patterns) {
         if ($line =~ /$pattern/) {
             syswrite(STDOUT, "$pattern_colorcodes{$pattern}$line$default_color");
@@ -228,39 +230,51 @@ sub colorize_and_output_line {
     $line = '';
 }
 
-if ( -t STDOUT ) {
+if (-t STDOUT) {
     # Output is to a terminal.
     # Read STDIN and output lines with appropriate formatting
     my $char;
     my $rin = "";
     my $rout;
+    my $nfound;
+    my $nread;
     vec ($rin, fileno(STDIN), 1) = 1;
 
     # We read one character at a time - inefficient, but allows us to sensibly handle 'prompt' lines
     # rather than waiting indefinitely for their newline - see below.
-    CHAR: while (1) {
+    while (1) {
         # Check whether any input is available to read, waiting for timeout otherwise
-        if (select(($rout = $rin), undef, undef, $unterminated_line_timeout_seconds)) {
-            # Read one char
-            unless (sysread(STDIN, $char, 1)) {
+        $nfound = select(($rout = $rin), undef, undef, $unterminated_line_timeout_seconds);
+        if ($nfound > 0) {
+            # Some input is ready, read one char
+            $nread = sysread(STDIN, $char, 1);
+            if ($nread > 0) {
+                # Got a character
+                $line = $line . $char;
+                if ($char eq "\n") {
+                    # Got a whole line.
+                    colorize_and_output_line;
+                }
+            } elsif ($nread == 0) {
                 # End of file - finished
                 colorize_and_output_line;
                 last;
+            } else {
+                die "ERROR: sysread failed on STDIN: $!, aborting";
             }
-            # Got a character
-            $line = $line . $char;
-            if ($char eq "\n") {
-                # Got a whole line.
+        } elsif ($nfound == 0) {
+            # Select timed out with no input
+            if ($line ne '') {
+                # We have some accumulated chars hidden in our buffer:
+                # i.e. no newline has appeared after waiting a while.
+                # Happens when output contains prompts for the user, with the cursor waiting at the end of the line for user input.
+                # Output the accumulated chars, running formatting on what we actually have,
+                # rather than waiting indefinitely for the newline while the prompt text is hidden in our buffer.
+                # XXX: if this happens in the middle of a line due to slow input, it may misapply colors - too bad.
                 colorize_and_output_line;
             }
-        } elsif ($line ne '') {
-            # Select timed out with no input, but we have some accumulated chars hidden in our buffer:
-            # i.e. no newline has appeared after waiting a while.
-            # Happens when output contains prompts for the user, with the cursor waiting at the end of the line for user input.
-            # Output the accumulated chars, running formatting on what we actually have,
-            # rather than waiting indefinitely for the newline while the prompt text is hidden in our buffer.
-            # XXX: if this happens in the middle of a line due to slow input, it may misapply colors - too bad.
-            colorize_and_output_line;
+        } else {
+            die "ERROR: select failed on STDIN: $!, aborting";
         }
     }
 } else {
