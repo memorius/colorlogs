@@ -161,28 +161,39 @@ open(CFG, $configfile);
         # Skip empty lines
         next if (/^\s*$/);
 
-        my ($color_name, $pattern);
+        # 'i' prefix on the pattern type = case insensitive
+        my $case_sensitive = 1;
+        if (/^\w+\s*i(?:regex|text|prefix|suffix|glob):/) {
+            $case_sensitive = 0;
+        }
 
-        if (/^\w+\s*regex:/) {
-            ($color_name, $pattern) = split(/\s*regex:/, $_, 2);
-        } elsif (/^\w+\s*text:/) {
+        # Handle different pattern types
+        my ($color_name, $pattern);
+        if (/^\w+\s*i?regex:/) {
+            ($color_name, $pattern) = split(/\s*i?regex:/, $_, 2);
+        } elsif (/^\w+\s*i?text:/) {
             escape_regex_special_chars;
-            ($color_name, $pattern) = split(/\s*text:/, $_, 2);
-        } elsif (/^\w+\s*prefix:/) {
+            ($color_name, $pattern) = split(/\s*i?text:/, $_, 2);
+        } elsif (/^\w+\s*i?prefix:/) {
             escape_regex_special_chars;
-            ($color_name, $pattern) = split(/\s*prefix:/, $_, 2);
+            ($color_name, $pattern) = split(/\s*i?prefix:/, $_, 2);
             $pattern = "^" . $pattern;
-        } elsif (/^\w+\s*suffix:/) {
+        } elsif (/^\w+\s*i?suffix:/) {
             escape_regex_special_chars;
-            ($color_name, $pattern) = split(/\s*suffix:/, $_, 2);
+            ($color_name, $pattern) = split(/\s*i?suffix:/, $_, 2);
             $pattern = $pattern . "\$";
-        } elsif (/^\w+\s*glob:/) {
+        } elsif (/^\w+\s*i?glob:/) {
             escape_non_glob_regex_special_chars;
-            ($color_name, $pattern) = split(/\s*glob:/, $_, 2);
+            ($color_name, $pattern) = split(/\s*i?glob:/, $_, 2);
             $pattern =~ s/\*/\.\*/g;
             $pattern =~ s/\?/\./g;
         } else {
             print STDERR "ERROR: Unknown pattern type for config file entry '$_'" and exit(1);
+        }
+
+        # Add case-insensitive regex modifier if required
+        unless ($case_sensitive) {
+            $pattern = "(?i)" . $pattern
         }
 
         $color_name = lc($color_name);
