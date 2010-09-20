@@ -26,7 +26,7 @@ use scriptname;
 ##########################################################
 
 # How long to wait for a newline before outputting buffered partial lines unformatted
-my $unterminated_line_timeout_seconds = 1;
+my $unterminated_line_timeout_seconds = 0.75;
 
 # Create the colorcodes Assoc. Array
 my %colorcodes = (
