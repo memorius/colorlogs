@@ -4,7 +4,7 @@ ColorLogs - A PERL script to colorize log viewing, command output etc
 Author:
 -------
 This version:
-  adapted by Nick Clarke - memorius@gmail.com - http://planproof-fool.blogspot.com/
+  adapted by Nick Clarke - memorius@gmail.com
   http://github.com/memorius/colorlogs/
 
 Original version:
